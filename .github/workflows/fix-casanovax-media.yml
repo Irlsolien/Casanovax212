@@ -1,4 +1,4 @@
-name: Fix CASANOVAX media
+name: Fix CASANOVAX malformed inline media
 
 on:
   push:
@@ -9,61 +9,42 @@ permissions:
   contents: write
 
 jobs:
-  inline-media:
+  repair-inline-media:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Inline all website media into HTML
+      - name: Repair malformed image sources
         shell: bash
         run: |
           python3 <<'PY'
           from pathlib import Path
-          import base64
 
           p = Path('index.html')
           text = p.read_text(encoding='utf-8')
-
-          files = {
-              'hero-casanovax.webp': 'assets/hero-casanovax.webp',
-              'trust-casanovax.webp': 'assets/trust-casanovax.webp',
-              'google-casanovax.webp': 'assets/google-casanovax.webp',
-              'dr-sonia-logo.webp': 'assets/dr-sonia-logo.webp',
-          }
-
-          for name, path in files.items():
-              raw = Path(path).read_bytes()
-              uri = 'data:image/webp;base64,' + base64.b64encode(raw).decode('ascii')
-              candidates = [
-                  f'/assets/{name}',
-                  f'assets/{name}',
-                  f'https://raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/{name}',
-              ]
-              replaced = False
-              for old in candidates:
-                  if old in text:
-                      text = text.replace(old, uri)
-                      replaced = True
-              if not replaced and name != 'dr-sonia-logo.webp':
-                  raise SystemExit(f'No reference found for {name}')
-
+          bad = 'https://raw.githubusercontent.com/Irlsolien/Casanovax212/maindata:image/webp;base64,'
+          count = text.count(bad)
+          if count == 0:
+              raise SystemExit('Malformed inline image prefix not found')
+          text = text.replace(bad, 'data:image/webp;base64,')
           p.write_text(text, encoding='utf-8')
-          print('All media inlined into index.html')
+          print(f'Repaired {count} malformed image source(s)')
           PY
 
-      - name: Validate self-contained page
+      - name: Validate image sources
+        shell: bash
         run: |
-          grep -q 'data:image/webp;base64,' index.html
-          ! grep -q 'raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/' index.html
-          ! grep -q 'src="/assets/' index.html
-          test $(grep -o 'data:image/webp;base64,' index.html | wc -l) -ge 4
+          ! grep -q 'maindata:image' index.html
+          ! grep -q 'raw.githubusercontent.com/Irlsolien/Casanovax212/maindata' index.html
+          grep -q 'src="data:image/webp;base64,' index.html
+          test $(grep -o 'src="data:image/webp;base64,' index.html | wc -l) -ge 4
 
-      - name: Commit self-contained media fix
+      - name: Commit repair
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Inline images to eliminate broken asset loading' || exit 0
+          git commit -m 'Fix malformed inline image sources' || exit 0
           git push
