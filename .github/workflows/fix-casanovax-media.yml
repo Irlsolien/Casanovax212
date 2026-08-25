@@ -16,14 +16,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fetch client logo
+      - name: Fetch Dr Sonia cabinet logo
         run: |
           mkdir -p assets
           curl -L --fail --retry 3 \
             https://raw.githubusercontent.com/Irlsolien/dr-sonia-abahou/main/public/dr-sonia-logo-cropped.webp \
             -o assets/dr-sonia-logo.webp
 
-      - name: Rewrite media and client section
+      - name: Simplify client proof and stabilize media
         shell: bash
         run: |
           python3 <<'PY'
@@ -33,121 +33,93 @@ jobs:
           p = Path('index.html')
           text = p.read_text(encoding='utf-8')
 
-          # Replace fragile inline WebP/base64 images with stable repository assets.
-          media_assets = [
-              'assets/hero-casanovax.webp',
-              'assets/trust-casanovax.webp',
-              'assets/hero-casanovax.webp',
-              'assets/google-casanovax.webp',
-              'assets/hero-casanovax.webp',
-              'assets/trust-casanovax.webp',
-          ]
+          # Keep generated photography on local repository assets only.
+          text = text.replace('src="assets/hero-casanovax.webp"', 'src="/assets/hero-casanovax.webp"')
+          text = text.replace('src="assets/trust-casanovax.webp"', 'src="/assets/trust-casanovax.webp"')
+          text = text.replace('src="assets/google-casanovax.webp"', 'src="/assets/google-casanovax.webp"')
 
-          pattern = re.compile(r'<img\s+[^>]*src="data:image/webp;base64,[^"]+"[^>]*>', re.S)
-          counter = {'i': 0}
-
-          def replace_inline(match):
-              i = counter['i']
-              if i >= len(media_assets):
-                  return match.group(0)
-              tag = match.group(0)
-              tag = re.sub(r'src="data:image/webp;base64,[^"]+"', f'src="{media_assets[i]}"', tag, flags=re.S)
-              counter['i'] += 1
-              return tag
-
-          text = pattern.sub(replace_inline, text)
-
-          # Navigation: client rail instead of detailed project/case study.
+          # Navigation now points to the client logo rail.
           text = text.replace('<a href="#work">Projet</a>', '<a href="#clients">Clients</a>')
           text = text.replace('href="#work"', 'href="#clients"')
 
-          client_section = '''<section class="clients-strip" id="clients" aria-label="Entreprises avec qui on travaille">
+          clients = '''<section class="clients-strip" id="clients" aria-label="Entreprises avec qui on travaille">
             <div class="container clients-head reveal">
-              <span class="section-index">02 / CLIENTS</span>
+              <span class="section-index">03 / Clients</span>
               <h2>Entreprises avec qui on travaille.</h2>
             </div>
             <div class="clients-marquee" aria-label="Cabinet Dr Sonia Abahou">
               <div class="clients-track">
-                <a class="client-logo" href="https://drsoniaabahou.com" target="_blank" rel="noopener" aria-label="Cabinet Dr Sonia Abahou"><img src="assets/dr-sonia-logo.webp" alt="Logo du cabinet Dr Sonia Abahou"></a>
-                <span class="client-logo" aria-hidden="true"><img src="assets/dr-sonia-logo.webp" alt=""></span>
-                <span class="client-logo" aria-hidden="true"><img src="assets/dr-sonia-logo.webp" alt=""></span>
-                <span class="client-logo" aria-hidden="true"><img src="assets/dr-sonia-logo.webp" alt=""></span>
-                <span class="client-logo" aria-hidden="true"><img src="assets/dr-sonia-logo.webp" alt=""></span>
-                <span class="client-logo" aria-hidden="true"><img src="assets/dr-sonia-logo.webp" alt=""></span>
+                <a class="client-logo" href="https://drsoniaabahou.com" target="_blank" rel="noopener" aria-label="Cabinet Dr Sonia Abahou"><img src="/assets/dr-sonia-logo.webp" alt="Logo du cabinet Dr Sonia Abahou"></a>
+                <span class="client-logo" aria-hidden="true"><img src="/assets/dr-sonia-logo.webp" alt=""></span>
+                <span class="client-logo" aria-hidden="true"><img src="/assets/dr-sonia-logo.webp" alt=""></span>
+                <span class="client-logo" aria-hidden="true"><img src="/assets/dr-sonia-logo.webp" alt=""></span>
+                <span class="client-logo" aria-hidden="true"><img src="/assets/dr-sonia-logo.webp" alt=""></span>
+                <span class="client-logo" aria-hidden="true"><img src="/assets/dr-sonia-logo.webp" alt=""></span>
               </div>
             </div>
           </section>'''
 
+          # Current production structure uses case-section, not proof.
           text, count = re.subn(
-              r'<section class="proof" id="work">.*?</section>\s*(?=<section class="pricing")',
-              client_section + '\n',
+              r'<section class="case-section" id="work">.*?</section>\s*(?=<section class="pricing")',
+              clients + '\n',
               text,
               flags=re.S,
           )
           if count != 1:
-              raise SystemExit(f'Expected one Dr Sonia case-study section, found {count}')
-
-          text = text.replace('02 / Engagement', '03 / Engagement')
-          text = text.replace('03 / Prochain projet', '04 / Prochain projet')
+              raise SystemExit(f'Expected one case-section, found {count}')
 
           client_css = r'''
-          /* Client rail: logos only, intentionally no case-study detail. */
-          .clients-strip{padding:96px 0 86px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;background:#0b0b0a}
-          .clients-head{display:grid;grid-template-columns:.58fr 1.42fr;gap:60px;align-items:end;margin-bottom:44px}
-          .clients-head h2{margin:0;font-size:clamp(38px,4.6vw,62px);line-height:.98;letter-spacing:-.05em;font-weight:500}
+          .clients-strip{padding:88px 0 82px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;background:#0b0b0a}
+          .clients-head{display:grid;grid-template-columns:.55fr 1.45fr;gap:56px;align-items:end;margin-bottom:38px}
+          .clients-head h2{margin:0;font-size:clamp(38px,4.7vw,64px);line-height:.98;letter-spacing:-.052em;font-weight:500}
           .clients-marquee{overflow:hidden;position:relative;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
-          .clients-track{display:flex;align-items:center;width:max-content;animation:clientRail 24s linear infinite;will-change:transform}
-          .client-logo{width:320px;height:118px;margin-right:88px;display:grid;place-items:center;flex:0 0 auto;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2);opacity:.88;transition:opacity .25s ease}
+          .clients-track{display:flex;align-items:center;width:max-content;animation:clientRail 22s linear infinite;will-change:transform}
+          .client-logo{width:330px;height:112px;margin-right:92px;display:grid;place-items:center;flex:0 0 auto;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2);opacity:.82;transition:opacity .25s ease}
           .client-logo:hover{opacity:1}
-          .client-logo img{display:block;max-width:230px;max-height:76px;width:auto;height:auto;object-fit:contain;filter:saturate(.78) brightness(1.08)}
-          @keyframes clientRail{from{transform:translateX(0)}to{transform:translateX(-408px)}}
-          .media-frame img,.chapter-media img,.hero-media img,.thesis-media img{background:#111;object-fit:cover}
+          .client-logo img{display:block;width:auto;height:auto;max-width:235px;max-height:72px;object-fit:contain;filter:saturate(.8) brightness(1.06)}
+          @keyframes clientRail{from{transform:translateX(0)}to{transform:translateX(-422px)}}
           '''
 
-          marker = '    @media(max-width:1000px){'
-          if marker not in text:
-              marker = '@media(max-width:1000px){'
-          text = text.replace(marker, client_css + '\n' + marker, 1)
+          marker = '@media(max-width:1000px)'
+          pos = text.find(marker)
+          if pos == -1:
+              marker = '@media (max-width:1000px)'
+              pos = text.find(marker)
+          if pos == -1:
+              raise SystemExit('Responsive CSS marker not found')
+          text = text[:pos] + client_css + text[pos:]
 
-          text = text.replace(
-              '.hero-grid,.thesis-grid,.system-grid,.proof-top,.pricing-head,.pricing-sub,.method-grid,.final-box{grid-template-columns:1fr;gap:34px}',
-              '.hero-grid,.thesis-grid,.system-grid,.proof-top,.pricing-head,.pricing-sub,.method-grid,.final-box,.clients-head{grid-template-columns:1fr;gap:34px}',
-              1,
-          )
+          # Mobile client rail styles.
+          mobile_marker = '@media(max-width:720px)'
+          mobile_pos = text.find(mobile_marker)
+          if mobile_pos != -1:
+              brace = text.find('{', mobile_pos)
+              text = text[:brace+1] + '.clients-strip{padding:68px 0}.clients-head{grid-template-columns:1fr;gap:18px;margin-bottom:26px}.client-logo{width:245px;height:92px;margin-right:56px}.client-logo img{max-width:185px;max-height:60px}' + text[brace+1:]
 
-          mobile_marker = '.hero-media{margin-top:42px;aspect-ratio:4/3}'
-          mobile_css = '.clients-strip{padding:72px 0}.clients-head{margin-bottom:30px}.client-logo{width:250px;height:96px;margin-right:58px}.client-logo img{max-width:190px;max-height:64px}@keyframes clientRail{from{transform:translateX(0)}to{transform:translateX(-308px)}}'
-          text = text.replace(mobile_marker, mobile_css + mobile_marker, 1)
-
-          text = text.replace(
-              '.journey-stage:after,.waves{animation:none}',
-              '.journey-stage:after,.waves,.clients-track{animation:none}',
-              1,
-          )
-
-          # No Dr Sonia photos or detailed case information should remain.
-          for forbidden in ['cabinet-consultation-patiente.webp', 'cabinet-accueil-reel.webp', 'dr-sonia-abahou.webp']:
-              text = text.replace(f'https://drsoniaabahou.com/{forbidden}', '')
+          # Reduced-motion support.
+          text = text.replace('.pulse{animation:none}', '.pulse,.clients-track{animation:none}')
 
           p.write_text(text, encoding='utf-8')
-          print(f'Replaced {counter["i"]} inline generated images with local assets.')
           PY
 
-      - name: Validate assets
+      - name: Validate corrected page
         run: |
           test -s assets/hero-casanovax.webp
           test -s assets/trust-casanovax.webp
           test -s assets/google-casanovax.webp
           test -s assets/dr-sonia-logo.webp
-          ! grep -q 'data:image/webp;base64' index.html
-          ! grep -q 'cabinet-consultation-patiente.webp' index.html
           grep -q 'Entreprises avec qui on travaille' index.html
-          grep -q 'assets/dr-sonia-logo.webp' index.html
+          grep -q '/assets/dr-sonia-logo.webp' index.html
+          ! grep -q 'dr-sonia-abahou.webp' index.html
+          ! grep -q 'cabinet-consultation-patiente.webp' index.html
+          ! grep -q 'cabinet-accueil-reel.webp' index.html
+          ! grep -q 'CASE / 001' index.html
 
       - name: Commit corrected site
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html assets/dr-sonia-logo.webp
-          git commit -m 'Fix media loading and simplify client proof' || exit 0
+          git commit -m 'Replace Dr Sonia case study with client logo rail' || exit 0
           git push
