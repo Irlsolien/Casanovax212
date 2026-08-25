@@ -1,4 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="8" fill="#090909"/>
-  <path d="M15 48V15L49 48V15" fill="none" stroke="#F0D4A0" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="title">
+  <title id="title">Monogramme CASANOVAX</title>
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F7E08A"/>
+      <stop offset=".45" stop-color="#D4AF37"/>
+      <stop offset="1" stop-color="#8F6B1C"/>
+    </linearGradient>
+    <linearGradient id="goldV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F2D877"/>
+      <stop offset="1" stop-color="#A98420"/>
+    </linearGradient>
+    <mask id="crescent">
+      <rect width="600" height="600" fill="#000"/>
+      <circle cx="300" cy="300" r="252" fill="#fff"/>
+      <circle cx="280" cy="280" r="246" fill="#000"/>
+    </mask>
+  </defs>
+  <rect width="600" height="600" fill="url(#gold)" mask="url(#crescent)"/>
+  <g fill="url(#goldV)">
+    <rect x="215" y="158" width="32" height="214"/>
+    <rect x="353" y="158" width="32" height="214"/>
+    <path d="M247 158h34l104 214h-34z"/>
+    <path d="M207 152h48v8h-48zm0 216h48v8h-48zm138-216h48v8h-48zm0 216h48v8h-48z"/>
+  </g>
+  <g fill="url(#goldV)" opacity=".92">
+    <path d="m291 404 9-16 9 16v66h-18zM196 446h26v26h-26zm34-14h22v40h-22zm28 8h18v32h-18zm66-4h20v36h-20zm26-8h24v44h-24zm32 20h22v24h-22zm-202 24h240v3H180z"/>
+  </g>
 </svg>
