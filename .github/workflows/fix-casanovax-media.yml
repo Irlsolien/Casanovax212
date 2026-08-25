@@ -9,105 +9,45 @@ permissions:
   contents: write
 
 jobs:
-  fix-site:
+  fix-media:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Fetch Dr Sonia cabinet logo
-        run: |
-          mkdir -p assets
-          curl -L --fail --retry 3 \
-            https://raw.githubusercontent.com/Irlsolien/dr-sonia-abahou/main/public/dr-sonia-logo-cropped.webp \
-            -o assets/dr-sonia-logo.webp
-
-      - name: Simplify client proof and stabilize media
-        shell: bash
+      - name: Replace broken Vercel asset paths
         run: |
           python3 <<'PY'
           from pathlib import Path
-          import re
 
           p = Path('index.html')
           text = p.read_text(encoding='utf-8')
 
-          text = text.replace('src="assets/hero-casanovax.webp"', 'src="/assets/hero-casanovax.webp"')
-          text = text.replace('src="assets/trust-casanovax.webp"', 'src="/assets/trust-casanovax.webp"')
-          text = text.replace('src="assets/google-casanovax.webp"', 'src="/assets/google-casanovax.webp"')
-          text = text.replace('<a href="#work">Projet</a>', '<a href="#clients">Clients</a>')
-          text = text.replace('href="#work"', 'href="#clients"')
+          replacements = {
+              '/assets/hero-casanovax.webp': 'https://raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/hero-casanovax.webp',
+              '/assets/trust-casanovax.webp': 'https://raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/trust-casanovax.webp',
+              '/assets/google-casanovax.webp': 'https://raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/google-casanovax.webp',
+              '/assets/dr-sonia-logo.webp': 'https://raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/dr-sonia-logo.webp',
+          }
 
-          clients = '''<section class="clients-strip" id="clients" aria-label="Entreprises avec qui on travaille">
-            <div class="container clients-head reveal">
-              <span class="section-index">03 / Clients</span>
-              <h2>Entreprises avec qui on travaille.</h2>
-            </div>
-            <div class="clients-marquee" aria-label="Cabinet Dr Sonia Abahou">
-              <div class="clients-track">
-                <a class="client-logo" href="https://drsoniaabahou.com" target="_blank" rel="noopener" aria-label="Cabinet Dr Sonia Abahou"><img src="/assets/dr-sonia-logo.webp" alt="Logo du cabinet Dr Sonia Abahou"></a>
-                <span class="client-logo" aria-hidden="true"><img src="/assets/dr-sonia-logo.webp" alt=""></span>
-                <span class="client-logo" aria-hidden="true"><img src="/assets/dr-sonia-logo.webp" alt=""></span>
-                <span class="client-logo" aria-hidden="true"><img src="/assets/dr-sonia-logo.webp" alt=""></span>
-                <span class="client-logo" aria-hidden="true"><img src="/assets/dr-sonia-logo.webp" alt=""></span>
-                <span class="client-logo" aria-hidden="true"><img src="/assets/dr-sonia-logo.webp" alt=""></span>
-              </div>
-            </div>
-          </section>'''
+          for old, new in replacements.items():
+              text = text.replace(old, new)
 
-          text, count = re.subn(
-              r'<section class="case-section" id="work">.*?</section>\s*(?=<section class="pricing")',
-              clients + '\n', text, flags=re.S)
-          if count != 1:
-              raise SystemExit(f'Expected one case-section, found {count}')
-
-          client_css = r'''
-          .clients-strip{padding:88px 0 82px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;background:#0b0b0a}
-          .clients-head{display:grid;grid-template-columns:.55fr 1.45fr;gap:56px;align-items:end;margin-bottom:38px}
-          .clients-head h2{margin:0;font-size:clamp(38px,4.7vw,64px);line-height:.98;letter-spacing:-.052em;font-weight:500}
-          .clients-marquee{overflow:hidden;position:relative;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
-          .clients-track{display:flex;align-items:center;width:max-content;animation:clientRail 22s linear infinite;will-change:transform}
-          .client-logo{width:330px;height:112px;margin-right:92px;display:grid;place-items:center;flex:0 0 auto;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2);opacity:.82;transition:opacity .25s ease}
-          .client-logo:hover{opacity:1}
-          .client-logo img{display:block;width:auto;height:auto;max-width:235px;max-height:72px;object-fit:contain;filter:saturate(.8) brightness(1.06)}
-          @keyframes clientRail{from{transform:translateX(0)}to{transform:translateX(-422px)}}
-          '''
-
-          marker = '@media(max-width:980px)'
-          pos = text.find(marker)
-          if pos == -1:
-              raise SystemExit('Responsive CSS marker not found')
-          text = text[:pos] + client_css + text[pos:]
-
-          mobile_marker = '@media(max-width:720px)'
-          mobile_pos = text.find(mobile_marker)
-          if mobile_pos != -1:
-              brace = text.find('{', mobile_pos)
-              mobile_css = '.clients-strip{padding:68px 0}.clients-head{grid-template-columns:1fr;gap:18px;margin-bottom:26px}.client-logo{width:245px;height:92px;margin-right:56px}.client-logo img{max-width:185px;max-height:60px}'
-              text = text[:brace+1] + mobile_css + text[brace+1:]
-
-          text = text.replace('.pulse{animation:none}', '.pulse,.clients-track{animation:none}')
           p.write_text(text, encoding='utf-8')
           PY
 
-      - name: Validate corrected page
+      - name: Validate external media URLs
         run: |
-          test -s assets/hero-casanovax.webp
-          test -s assets/trust-casanovax.webp
-          test -s assets/google-casanovax.webp
-          test -s assets/dr-sonia-logo.webp
-          grep -q 'Entreprises avec qui on travaille' index.html
-          grep -q '/assets/dr-sonia-logo.webp' index.html
-          ! grep -q 'dr-sonia-abahou.webp' index.html
-          ! grep -q 'cabinet-consultation-patiente.webp' index.html
-          ! grep -q 'cabinet-accueil-reel.webp' index.html
-          ! grep -q 'CASE / 001' index.html
+          grep -q 'raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/hero-casanovax.webp' index.html
+          grep -q 'raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/trust-casanovax.webp' index.html
+          grep -q 'raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/google-casanovax.webp' index.html
+          grep -q 'raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/dr-sonia-logo.webp' index.html
 
-      - name: Commit corrected site
+      - name: Commit media URL fix
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html assets/dr-sonia-logo.webp
-          git commit -m 'Replace Dr Sonia case study with client logo rail' || exit 0
+          git add index.html
+          git commit -m 'Fix broken media URLs on Vercel' || exit 0
           git push
