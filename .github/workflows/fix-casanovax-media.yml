@@ -9,45 +9,61 @@ permissions:
   contents: write
 
 jobs:
-  fix-media:
+  inline-media:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Replace broken Vercel asset paths
+      - name: Inline all website media into HTML
+        shell: bash
         run: |
           python3 <<'PY'
           from pathlib import Path
+          import base64
 
           p = Path('index.html')
           text = p.read_text(encoding='utf-8')
 
-          replacements = {
-              '/assets/hero-casanovax.webp': 'https://raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/hero-casanovax.webp',
-              '/assets/trust-casanovax.webp': 'https://raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/trust-casanovax.webp',
-              '/assets/google-casanovax.webp': 'https://raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/google-casanovax.webp',
-              '/assets/dr-sonia-logo.webp': 'https://raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/dr-sonia-logo.webp',
+          files = {
+              'hero-casanovax.webp': 'assets/hero-casanovax.webp',
+              'trust-casanovax.webp': 'assets/trust-casanovax.webp',
+              'google-casanovax.webp': 'assets/google-casanovax.webp',
+              'dr-sonia-logo.webp': 'assets/dr-sonia-logo.webp',
           }
 
-          for old, new in replacements.items():
-              text = text.replace(old, new)
+          for name, path in files.items():
+              raw = Path(path).read_bytes()
+              uri = 'data:image/webp;base64,' + base64.b64encode(raw).decode('ascii')
+              candidates = [
+                  f'/assets/{name}',
+                  f'assets/{name}',
+                  f'https://raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/{name}',
+              ]
+              replaced = False
+              for old in candidates:
+                  if old in text:
+                      text = text.replace(old, uri)
+                      replaced = True
+              if not replaced and name != 'dr-sonia-logo.webp':
+                  raise SystemExit(f'No reference found for {name}')
 
           p.write_text(text, encoding='utf-8')
+          print('All media inlined into index.html')
           PY
 
-      - name: Validate external media URLs
+      - name: Validate self-contained page
         run: |
-          grep -q 'raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/hero-casanovax.webp' index.html
-          grep -q 'raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/trust-casanovax.webp' index.html
-          grep -q 'raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/google-casanovax.webp' index.html
-          grep -q 'raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/dr-sonia-logo.webp' index.html
+          grep -q 'data:image/webp;base64,' index.html
+          ! grep -q 'raw.githubusercontent.com/Irlsolien/Casanovax212/main/assets/' index.html
+          ! grep -q 'src="/assets/' index.html
+          test $(grep -o 'data:image/webp;base64,' index.html | wc -l) -ge 4
 
-      - name: Commit media URL fix
+      - name: Commit self-contained media fix
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Fix broken media URLs on Vercel' || exit 0
+          git commit -m 'Inline images to eliminate broken asset loading' || exit 0
           git push
