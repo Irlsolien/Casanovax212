@@ -1,0 +1,1 @@
+CASANOVAX visual assets used by the marketing website.
