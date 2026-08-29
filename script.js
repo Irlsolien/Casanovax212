@@ -165,7 +165,7 @@ if (contactSection) {
 const copyButton = document.querySelector('[data-copy-brief]');
 const toast = document.querySelector('[data-toast]');
 copyButton?.addEventListener('click', async () => {
-  const brief = `Bonjour Akram — CASANOVAX
+  const brief = `Bonjour l’équipe CASANOVAX
 
 Je veux construire le système digital de mon activité.
 
