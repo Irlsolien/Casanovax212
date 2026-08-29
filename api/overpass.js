@@ -23,6 +23,11 @@ async function queryMirror(url, data) {
   if (!resp.ok) throw new Error("HTTP " + resp.status + " @ " + url);
   const json = await resp.json();
   if (!json || !Array.isArray(json.elements)) throw new Error("réponse invalide @ " + url);
+  // Overpass renvoie parfois HTTP 200 avec 0 élément + un "remark" d'erreur
+  // (timeout, surcharge). On le traite comme un échec pour basculer de miroir.
+  if (json.remark && /timed out|error|rate|load|dispatcher/i.test(json.remark)) {
+    throw new Error("remark: " + json.remark + " @ " + url);
+  }
   return json;
 }
 
