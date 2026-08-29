@@ -19,6 +19,24 @@ const SECTORS = {
   "vétérinaire": '["amenity"="veterinary"]',
 };
 
+// Chiffres de début (après indicatif) qui identifient un MOBILE.
+// Sert à écarter les lignes fixes (pas de WhatsApp). Si l'indicatif n'est pas
+// listé, on ne tranche pas (statut "inconnu" → WhatsApp autorisé).
+const MOBILE_RULES = {
+  "212": ["6", "7"],            // Maroc : 06/07 mobile, 05 fixe
+  "33": ["6", "7"],             // France
+  "34": ["6", "7"],             // Espagne
+  "32": ["4"],                  // Belgique
+  "213": ["5", "6", "7"],       // Algérie
+  "216": ["2", "4", "5", "9"],  // Tunisie
+  "971": ["5"],                 // Émirats
+  "966": ["5"],                 // Arabie Saoudite
+  "44": ["7"],                  // Royaume-Uni
+  "49": ["1"],                  // Allemagne
+  "20": ["1"],                  // Égypte
+  "221": ["7"],                 // Sénégal
+};
+
 // Indicatifs pour convertir un numéro local (commençant par 0) en international.
 const CALLING = {
   "morocco": "212", "maroc": "212", "france": "33", "belgium": "32", "belgique": "32",
@@ -80,6 +98,29 @@ function waLink(phone, msg, country) {
   return d ? `https://wa.me/${d}?text=${encodeURIComponent(msg)}` : "";
 }
 
+// mobile / fixe / unknown à partir du numéro et du pays.
+function phoneKind(raw, country) {
+  const d = normalizePhone(raw, country);
+  if (!d) return "unknown";
+  const cc = callingCode(country);
+  const nat = d.startsWith(cc) ? d.slice(cc.length) : d;
+  const rules = MOBILE_RULES[cc];
+  if (!rules) return "unknown";
+  return rules.some((p) => nat.startsWith(p)) ? "mobile" : "fixe";
+}
+
+// Une fiche OSM peut lister plusieurs numéros : on choisit un mobile si possible.
+function pickBestPhone(raw, country) {
+  const nums = String(raw).split(/[;,/]+/).map((s) => s.trim()).filter(Boolean);
+  let fallback = null;
+  for (const n of nums) {
+    const k = phoneKind(n, country);
+    if (k === "mobile") return { number: n, kind: "mobile" };
+    if (!fallback) fallback = { number: n, kind: k };
+  }
+  return fallback || { number: raw, kind: phoneKind(raw, country) };
+}
+
 /* ---------- réseau ---------- */
 async function geocode(city, country) {
   const url = `${NOMINATIM}?q=${encodeURIComponent(city + ", " + country)}&format=json&limit=1`;
@@ -124,11 +165,13 @@ function addElements(els, seen, city, country) {
     if (seen.has(key)) continue;
     const website = t.website || t["contact:website"] || "";
     if (website) continue;                       // signal : PAS de site
-    const phone = t.phone || t["contact:phone"] || t["contact:mobile"] || "";
-    if (!phone) continue;                          // besoin d'un numéro pour WhatsApp
+    const rawPhone = t["contact:mobile"] || t.phone || t["contact:phone"] || "";
+    if (!rawPhone) continue;                        // besoin d'un numéro pour contacter
     seen.add(key);
+    const best = pickBestPhone(rawPhone, country);
     leads.push({ id: `${el.type}${el.id}`, name: t.name.trim(),
-                 sector: sectorOf(t), city, country, phone });
+                 sector: sectorOf(t), city, country,
+                 phone: best.number, kind: best.kind });
     added++;
   }
   return added;
@@ -155,7 +198,8 @@ async function search() {
       try {
         const els = await overpass(buildQuery(bbox, [sectors[i]]));
         addElements(els, seen, city, country);
-        leads.sort((a, b) => a.name.localeCompare(b.name));
+        const rank = { mobile: 0, unknown: 1, fixe: 2 };
+        leads.sort((a, b) => (rank[a.kind] - rank[b.kind]) || a.name.localeCompare(b.name));
         render();
         ok++;
       } catch (e) {
@@ -180,53 +224,73 @@ async function search() {
 function setStatus(msg, err) {
   const s = $("status"); s.textContent = msg; s.classList.toggle("err", !!err);
 }
-function updateCounters(shown, done) {
-  $("counters").innerHTML = `<b>${shown}</b> à contacter<br>${done} traités`;
+function updateCounters(wa, fixe, done) {
+  $("counters").innerHTML = `<b>${wa}</b> WhatsApp · ${fixe} fixes<br>${done} traités`;
 }
 function render() {
   const treated = loadTreated();
   const showDone = $("showDone").checked;
+  const hideFixed = $("hideFixed").checked;
   const list = $("list");
   list.innerHTML = "";
-  let shown = 0, done = 0;
+  let shown = 0, done = 0, waCount = 0, fixeCount = 0;
 
   for (const l of leads) {
+    const isFixe = l.kind === "fixe";
+    if (isFixe) fixeCount++; else waCount++;
     const st = treated[l.id];
     if (st) done++;
+    if (isFixe && hideFixed && !st) continue;
     if (st && !showDone) continue;
     shown += st ? 0 : 1;
 
     const msg = message(l.name, l.city);
-    const link = waLink(l.phone, msg, l.country);
     const card = document.createElement("div");
     card.className = "card" + (st ? " done" : "");
     card.innerHTML = `
-      <div class="h">
-        <div><div class="name"></div><div class="tag"></div></div>
-      </div>
+      <div class="h"><div><div class="name"></div><div class="tag"></div></div></div>
       <div class="meta"></div>
       <div class="msg"></div>
-      <div class="actions">
-        <a class="wa" target="_blank" rel="noopener">Ouvrir WhatsApp</a>
-        <button class="skip">Passer</button>
-      </div>`;
+      <div class="actions"></div>`;
     card.querySelector(".name").textContent = l.name;
-    card.querySelector(".tag").textContent = st ? (st === "sent" ? "✓ envoyé" : "passé") : "pas de site";
+    const tag = card.querySelector(".tag");
+    tag.textContent = st ? (st === "sent" ? "✓ contacté" : "passé")
+                         : (isFixe ? "☎ fixe · pas de WhatsApp" : "pas de site");
+    if (isFixe) tag.classList.add("tag-fixe");
     card.querySelector(".meta").textContent = `${l.sector} · ${l.city} · ${l.phone}`;
     card.querySelector(".msg").textContent = msg;
-    const wa = card.querySelector(".wa");
-    wa.href = link;
-    wa.addEventListener("click", () => { markTreated(l.id, "sent"); setTimeout(render, 400); });
-    card.querySelector(".skip").addEventListener("click", () => { markTreated(l.id, "skip"); render(); });
+
+    const actions = card.querySelector(".actions");
+    if (isFixe) {
+      const call = document.createElement("a");
+      call.className = "call";
+      call.href = "tel:" + normalizePhone(l.phone, l.country);
+      call.textContent = "Appeler";
+      call.addEventListener("click", () => { markTreated(l.id, "sent"); setTimeout(render, 400); });
+      actions.appendChild(call);
+    } else {
+      const wa = document.createElement("a");
+      wa.className = "wa"; wa.target = "_blank"; wa.rel = "noopener";
+      wa.href = waLink(l.phone, msg, l.country);
+      wa.textContent = "Ouvrir WhatsApp";
+      wa.addEventListener("click", () => { markTreated(l.id, "sent"); setTimeout(render, 400); });
+      actions.appendChild(wa);
+    }
+    const skip = document.createElement("button");
+    skip.className = "skip"; skip.textContent = "Passer";
+    skip.addEventListener("click", () => { markTreated(l.id, "skip"); render(); });
+    actions.appendChild(skip);
     list.appendChild(card);
   }
 
-  if (!shown && !showDone) {
+  if (!shown) {
     list.innerHTML = `<div class="empty">${leads.length
-      ? "Tous les prospects de cette recherche sont traités. 🎉<br>Change de ville ou de secteur."
+      ? (hideFixed && fixeCount && !waCount
+          ? "Uniquement des lignes fixes ici (pas de WhatsApp).<br>Décoche « Masquer les fixes » pour les appeler, ou change de secteur."
+          : "Tous les prospects de cette recherche sont traités. 🎉<br>Change de ville ou de secteur.")
       : "Aucun résultat. Lance une recherche."}</div>`;
   }
-  updateCounters(leads.length - done, done);
+  updateCounters(waCount, fixeCount, done);
 }
 
 /* ---------- secteurs UI ---------- */
@@ -250,12 +314,13 @@ function buildSectorChips() {
 buildSectorChips();
 $("search").addEventListener("click", search);
 $("showDone").addEventListener("change", render);
+$("hideFixed").addEventListener("change", render);
 $("reset").addEventListener("click", () => {
   if (confirm("Effacer tout l'historique des prospects traités ?")) {
     saveTreated({}); render();
   }
 });
-updateCounters(0, 0);
+updateCounters(0, 0, 0);
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/prospect/sw.js").catch(() => {});
