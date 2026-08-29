@@ -4,13 +4,14 @@
 // EN PARALLÈLE : le premier qui répond correctement gagne. Beaucoup plus fiable
 // que d'attendre un seul serveur souvent saturé.
 
+// Uniquement des instances Overpass à couverture MONDIALE.
+// (On évite les miroirs régionaux type overpass.osm.ch qui renvoient 0 hors de
+//  leur pays et fausseraient la course parallèle.)
 const MIRRORS = [
   "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-  "https://overpass.osm.jp/api/interpreter",
-  "https://overpass.osm.ch/api/interpreter",
 ];
 
 async function queryMirror(url, data) {
