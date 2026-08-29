@@ -96,7 +96,7 @@ async function geocode(city, country) {
 function buildQuery(bbox, sectors) {
   const box = `${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]}`;
   const parts = [...sectors].map((s) => `  nwr${SECTORS[s]}(${box});`).join("\n");
-  return `[out:json][timeout:90];\n(\n${parts}\n);\nout center tags;`;
+  return `[out:json][timeout:25];\n(\n${parts}\n);\nout center tags;`;
 }
 async function overpass(query) {
   let lastErr;
@@ -129,40 +129,62 @@ function sectorOf(tags) {
 }
 
 /* ---------- pipeline ---------- */
+function addElements(els, seen, city, country) {
+  let added = 0;
+  for (const el of els) {
+    const t = el.tags || {};
+    if (!t.name) continue;
+    const key = t.name.trim().toLowerCase();
+    if (seen.has(key)) continue;
+    const website = t.website || t["contact:website"] || "";
+    if (website) continue;                       // signal : PAS de site
+    const phone = t.phone || t["contact:phone"] || t["contact:mobile"] || "";
+    if (!phone) continue;                          // besoin d'un numéro pour WhatsApp
+    seen.add(key);
+    leads.push({ id: `${el.type}${el.id}`, name: t.name.trim(),
+                 sector: sectorOf(t), city, country, phone });
+    added++;
+  }
+  return added;
+}
+
 async function search() {
   const city = $("city").value.trim() || "Casablanca";
   const country = $("country").value.trim() || "Morocco";
-  setStatus("Localisation de " + city + "…");
+  const sectors = [...selectedSectors];
+  if (!sectors.length) { setStatus("Choisis au moins un secteur.", true); return; }
+
   $("search").disabled = true;
+  setStatus("Localisation de " + city + "…");
   try {
     const bbox = await geocode(city, country);
     if (!bbox) { setStatus("Ville introuvable : " + city + ", " + country, true); return; }
-    setStatus("Recherche des commerces…");
-    const els = await overpass(buildQuery(bbox, selectedSectors));
-    const seen = new Set();
+
+    // Recherche secteur par secteur : plus léger, plus fiable, résultats en direct.
     leads = [];
-    for (const el of els) {
-      const t = el.tags || {};
-      if (!t.name) continue;
-      const key = t.name.trim().toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const website = t.website || t["contact:website"] || "";
-      if (website) continue; // signal : PAS de site
-      const phone = t.phone || t["contact:phone"] || t["contact:mobile"] || "";
-      if (!phone) continue; // besoin d'un numéro pour WhatsApp
-      leads.push({
-        id: `${el.type}${el.id}`,
-        name: t.name.trim(),
-        sector: sectorOf(t),
-        city, country, phone,
-      });
+    const seen = new Set();
+    let ok = 0, fail = 0;
+    for (let i = 0; i < sectors.length; i++) {
+      setStatus(`Recherche… ${sectors[i]} (${i + 1}/${sectors.length}) · ${leads.length} trouvés`);
+      try {
+        const els = await overpass(buildQuery(bbox, [sectors[i]]));
+        addElements(els, seen, city, country);
+        leads.sort((a, b) => a.name.localeCompare(b.name));
+        render();
+        ok++;
+      } catch (e) {
+        fail++;
+      }
     }
-    render();
-    setStatus("");
+    if (!leads.length) {
+      setStatus(fail
+        ? "Serveurs OpenStreetMap occupés. Réessaie dans une minute."
+        : "Aucun commerce sans site trouvé ici. Change de ville ou de secteur.", !!fail);
+    } else {
+      setStatus(fail ? `${leads.length} prospects (${fail} secteur(s) non chargé(s), réessaie).` : "");
+    }
   } catch (e) {
-    setStatus("Serveurs OpenStreetMap occupés. Réessaie dans une minute "
-      + "(ou réduis le nombre de secteurs).", true);
+    setStatus("Erreur : " + e.message + ". Réessaie dans un instant.", true);
   } finally {
     $("search").disabled = false;
   }
