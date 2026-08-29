@@ -1,9 +1,9 @@
 /* Service worker minimal : rend l'app installable et charge la coquille hors-ligne.
    Les recherches (OSM) nécessitent internet ; le reste fonctionne offline. */
-const CACHE = "cx-prospect-v1";
+const CACHE = "cx-prospect-v2";
 const SHELL = [
-  "./", "./index.html", "./styles.css", "./app.js",
-  "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png",
+  "/prospect/", "/prospect/index.html", "/prospect/styles.css", "/prospect/app.js",
+  "/prospect/manifest.webmanifest", "/prospect/icons/icon-192.png", "/prospect/icons/icon-512.png",
 ];
 
 self.addEventListener("install", (e) => {

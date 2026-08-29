@@ -231,5 +231,5 @@ $("reset").addEventListener("click", () => {
 updateCounters(0, 0);
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js").catch(() => {});
+  navigator.serviceWorker.register("/prospect/sw.js").catch(() => {});
 }
