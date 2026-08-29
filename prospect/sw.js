@@ -1,6 +1,6 @@
 /* Service worker minimal : rend l'app installable et charge la coquille hors-ligne.
    Les recherches (OSM) nécessitent internet ; le reste fonctionne offline. */
-const CACHE = "cx-prospect-v5";
+const CACHE = "cx-prospect-v6";
 const SHELL = [
   "/prospect/", "/prospect/index.html", "/prospect/styles.css", "/prospect/app.js",
   "/prospect/manifest.webmanifest", "/prospect/icons/icon-192.png", "/prospect/icons/icon-512.png",
@@ -21,8 +21,7 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   // Ne jamais toucher aux appels réseau vers OSM (données fraîches).
-  if (url.hostname.includes("openstreetmap") || url.hostname.includes("overpass")
-      || url.hostname.includes("kumi") || url.hostname.includes("coffee")) return;
+  if (url.hostname.includes("openstreetmap") || url.pathname.startsWith("/api/")) return;
   if (e.request.method !== "GET") return;
   // Network-first : toujours la dernière version en ligne, cache en secours hors-ligne.
   e.respondWith(

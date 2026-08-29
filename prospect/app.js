@@ -31,12 +31,8 @@ const CALLING = {
 };
 
 const NOMINATIM = "https://nominatim.openstreetmap.org/search";
-// Plusieurs miroirs Overpass : si l'un est saturé (rate-limit), on bascule.
-const OVERPASS_MIRRORS = [
-  "https://overpass-api.de/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
-  "https://overpass.private.coffee/api/interpreter",
-];
+// Proxy same-origin (fonction serverless) : pas de CORS, bascule de miroirs côté serveur.
+const OVERPASS_API = "/api/overpass";
 const STORE_KEY = "cx_treated_v1";
 
 const $ = (id) => document.getElementById(id);
@@ -99,26 +95,16 @@ function buildQuery(bbox, sectors) {
   return `[out:json][timeout:25];\n(\n${parts}\n);\nout center tags;`;
 }
 async function overpass(query) {
-  let lastErr;
-  for (const url of OVERPASS_MIRRORS) {
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 20000); // 20 s max par miroir
-    try {
-      const r = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "data=" + encodeURIComponent(query),
-        signal: ctl.signal,
-      });
-      if (!r.ok) { lastErr = new Error("HTTP " + r.status); continue; }
-      return (await r.json()).elements || [];
-    } catch (e) {
-      lastErr = e; // miroir injoignable, saturé ou trop lent → on essaie le suivant
-    } finally {
-      clearTimeout(timer);
-    }
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 25000);
+  try {
+    const r = await fetch(OVERPASS_API + "?data=" + encodeURIComponent(query),
+                          { signal: ctl.signal });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return (await r.json()).elements || [];
+  } finally {
+    clearTimeout(timer);
   }
-  throw lastErr || new Error("Overpass indisponible");
 }
 function sectorOf(tags) {
   for (const [name, flt] of Object.entries(SECTORS)) {
