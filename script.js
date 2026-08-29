@@ -165,16 +165,15 @@ if (contactSection) {
 const copyButton = document.querySelector('[data-copy-brief]');
 const toast = document.querySelector('[data-toast]');
 copyButton?.addEventListener('click', async () => {
-  const brief = `Bonjour CASANOVAX,
+  const brief = `Bonjour Akram — CASANOVAX
 
-Offre envisagée : ${selectedPlan || 'À définir ensemble'}
-Entreprise :
-Secteur d’activité :
-Objectif prioritaire :
-Services recherchés : site / Google / NFC / automatisation
-Budget indicatif :
-Date souhaitée :
-Site actuel :
+Je veux construire le système digital de mon activité.
+
+Activité :
+Ville :
+Site actuel (s’il existe) :
+Objectif principal : plus de demandes / plus d’avis / meilleur Google / autre
+Budget visé : ${selectedPlan || 'Essentiel 3900 / Business 5900 / Premium'}
 
 Merci.`;
 
