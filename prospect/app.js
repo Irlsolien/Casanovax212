@@ -101,16 +101,21 @@ function buildQuery(bbox, sectors) {
 async function overpass(query) {
   let lastErr;
   for (const url of OVERPASS_MIRRORS) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 20000); // 20 s max par miroir
     try {
       const r = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: "data=" + encodeURIComponent(query),
+        signal: ctl.signal,
       });
       if (!r.ok) { lastErr = new Error("HTTP " + r.status); continue; }
       return (await r.json()).elements || [];
     } catch (e) {
-      lastErr = e; // miroir injoignable ou saturé → on essaie le suivant
+      lastErr = e; // miroir injoignable, saturé ou trop lent → on essaie le suivant
+    } finally {
+      clearTimeout(timer);
     }
   }
   throw lastErr || new Error("Overpass indisponible");
@@ -156,7 +161,8 @@ async function search() {
     render();
     setStatus("");
   } catch (e) {
-    setStatus("Erreur réseau : " + e.message + ". Réessaie dans un instant.", true);
+    setStatus("Serveurs OpenStreetMap occupés. Réessaie dans une minute "
+      + "(ou réduis le nombre de secteurs).", true);
   } finally {
     $("search").disabled = false;
   }
