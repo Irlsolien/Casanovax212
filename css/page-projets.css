@@ -1,0 +1,64 @@
+/* CASANOVAX — variante B · page Projets (styles spécifiques, préfixe .pj-) */
+
+/* En-tête du case study */
+.pj-case-head { display: flex; align-items: flex-start; gap: 26px; }
+.pj-case-index { flex: 0 0 auto; display: inline-grid; place-items: center; width: 54px; height: 54px; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--gold-light); font: 500 15px var(--mono); }
+.pj-case-tags { margin-top: 16px; flex-wrap: wrap; }
+
+/* Mise en page éditoriale : récit + maquette */
+.pj-case-layout { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(36px, 5vw, 72px); align-items: start; margin-top: clamp(40px, 5vw, 64px); }
+
+/* Blocs Contexte / Intervention / Résultat */
+.pj-story { display: grid; gap: clamp(26px, 3vw, 38px); }
+.pj-block { border-left: 1px solid var(--line-strong); padding-left: clamp(18px, 2.4vw, 28px); }
+.pj-block-label { margin-bottom: 10px; color: var(--gold-light); font: 600 11px/1 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; }
+.pj-block p { color: var(--ivory-dim); font-size: 15px; max-width: 480px; }
+
+/* Maquette navigateur abstraite (pur CSS, pas de fausse capture) */
+.pj-stage { margin: 0; position: relative; }
+.pj-browser { border: 1px solid var(--line-strong); border-radius: 18px; overflow: hidden; background: var(--surface); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35); }
+.pj-browser-bar { display: flex; align-items: center; gap: 7px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+.pj-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line-strong); }
+.pj-browser-bar .pj-dot:first-child { background: rgba(212, 175, 55, 0.55); }
+.pj-browser-url { margin-left: 10px; color: var(--muted); font: 500 10px/1 var(--mono); letter-spacing: 0.08em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pj-browser-body { padding: clamp(26px, 4vw, 44px) clamp(22px, 3.4vw, 38px) clamp(22px, 3vw, 32px); }
+.pj-kicker-bar { display: block; width: 64px; height: 6px; border-radius: 999px; background: var(--gold); opacity: 0.7; }
+.pj-serif { margin: 18px 0 20px; font-family: var(--display); font-size: clamp(26px, 3.2vw, 38px); line-height: 1.1; letter-spacing: -0.01em; }
+.pj-serif em { font-style: italic; color: var(--gold-light); }
+.pj-text-bar { display: block; height: 8px; border-radius: 999px; background: var(--line); margin-bottom: 10px; }
+.pj-text-bar--l { width: 88%; }
+.pj-text-bar--m { width: 70%; }
+.pj-text-bar--s { width: 46%; }
+.pj-browser-foot { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line); }
+.pj-wa { display: inline-flex; align-items: center; gap: 9px; padding: 9px 18px; border-radius: 999px; background: rgba(126, 203, 145, 0.12); border: 1px solid rgba(126, 203, 145, 0.35); color: var(--green); font: 600 10.5px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+.pj-wa i { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.pj-foot-note { color: var(--muted); font: 600 10.5px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* Médaillon logo, posé sur la maquette */
+.pj-medaillon { position: absolute; right: -18px; bottom: -26px; display: grid; place-items: center; width: clamp(96px, 11vw, 132px); aspect-ratio: 1; border-radius: 50%; background: var(--surface-2); border: 1px solid rgba(212, 175, 55, 0.4); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4); }
+.pj-medaillon img { width: 62%; height: auto; }
+
+/* Rangée méta du projet */
+.pj-meta { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: clamp(44px, 5vw, 64px); border-block: 1px solid var(--line); }
+.pj-meta li { padding: 18px 14px 18px 0; border-right: 1px solid var(--line); color: var(--muted); font: 600 10.5px/1.5 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; }
+.pj-meta li + li { padding-left: 16px; }
+.pj-meta li:last-child { border-right: 0; }
+.pj-meta b { display: block; color: var(--gold-light); font-weight: 500; }
+
+/* Carte "pourquoi vide" — équilibre visuel avec la nx-card */
+.pj-honest { display: flex; flex-direction: column; justify-content: center; }
+
+/* Responsive */
+@media (max-width: 1023px) {
+  .pj-case-layout { grid-template-columns: 1fr; }
+  .pj-stage { max-width: 620px; }
+}
+@media (max-width: 767px) {
+  .pj-case-head { gap: 16px; }
+  .pj-case-index { width: 44px; height: 44px; font-size: 13px; }
+  .pj-meta { grid-template-columns: 1fr; }
+  .pj-meta li { border-right: 0; border-bottom: 1px solid var(--line); padding-left: 0; }
+  .pj-meta li + li { padding-left: 0; }
+  .pj-meta li:last-child { border-bottom: 0; }
+  .pj-medaillon { right: 8px; bottom: -20px; }
+}

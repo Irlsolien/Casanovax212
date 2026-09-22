@@ -1,0 +1,21 @@
+/* Page check-up gratuit */
+.cu-layout { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 5vw, 72px); align-items: start; }
+.cu-points { margin-top: 26px; display: grid; gap: 18px; }
+.cu-points li { display: flex; gap: 16px; align-items: flex-start; color: var(--s-dim); font-size: 15.5px; }
+.cu-points b { flex: 0 0 auto; display: inline-grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--s-line-strong); border-radius: 999px; color: var(--s-accent); font: 700 12px var(--font-mono); }
+.cu-note { margin-top: 26px; color: var(--s-mut); font: 700 11.5px/1.6 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+
+.cu-form { border: 1px solid var(--s-line); border-radius: var(--r-4xl); background: var(--s-card); padding: clamp(26px, 3.6vw, 42px); display: grid; gap: 16px; box-shadow: 0 30px 70px -40px rgba(11, 11, 11, 0.25); }
+.cu-form label { display: grid; gap: 7px; font: 700 11px/1.4 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--s-mut); }
+.cu-form label small { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.cu-form input, .cu-form select { min-height: 50px; padding: 0 16px; border: 1px solid var(--s-line-strong); border-radius: var(--r-xl); background: var(--s-bg); font: 500 15.5px/1 var(--font-sans); color: var(--s-ink); transition: border-color 0.2s; }
+.cu-form input:focus, .cu-form select:focus { outline: none; border-color: var(--gold); }
+.cu-submit { width: 100%; margin-top: 4px; }
+.cu-privacy { color: var(--s-mut); font-size: 11.5px; text-align: center; }
+.cu-status { min-height: 1em; color: #b3261e; font-size: 13.5px; text-align: center; }
+.cu-status a { color: var(--s-accent); font-weight: 700; text-decoration: underline; }
+.cu-success { text-align: center; display: grid; gap: 14px; justify-items: center; padding: 20px 0; }
+.cu-success h3 { font-weight: 800; font-size: 24px; letter-spacing: -0.02em; }
+.cu-success p { color: var(--s-mut); }
+
+@media (max-width: 1023px) { .cu-layout { grid-template-columns: 1fr; } }
