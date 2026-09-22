@@ -1,0 +1,84 @@
+/* CASANOVAX — variante B · pages À propos (.ap-) et Contact (.ct-) */
+
+/* ============ À PROPOS ============ */
+
+/* Positionnement */
+.ap-position { display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(32px, 5vw, 72px); align-items: start; margin-top: clamp(32px, 4vw, 52px); }
+.ap-position p { color: var(--ivory-dim); font-size: clamp(15px, 1.25vw, 17px); }
+.ap-position p + p { margin-top: 18px; }
+.ap-position strong { color: var(--ivory); font-weight: 700; }
+.ap-creed { border-left: 2px solid var(--gold); padding-left: 22px; font-family: var(--display); font-style: italic; font-weight: 500; font-size: clamp(20px, 2.2vw, 28px); line-height: 1.35; color: var(--gold-light); }
+.ap-bricks { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+.ap-bricks li { border: 1px solid var(--line-strong); border-radius: 999px; padding: 7px 16px; color: var(--ivory-dim); font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; }
+.ap-bricks li::before { content: "◆"; color: var(--gold); font-size: 8px; margin-right: 8px; }
+
+/* Méthode — livrables dans les cards */
+.ap-livrables { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.ap-livrables li { color: var(--ivory-dim); font: 500 12px/1.6 var(--mono); letter-spacing: 0.04em; padding: 3px 0; }
+.ap-livrables li::before { content: "→"; color: var(--gold); margin-right: 10px; }
+
+/* Bande support après lancement */
+.ap-after { margin-top: 24px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 18px; background: var(--surface); padding: 22px 26px; }
+.ap-after-label { color: var(--gold-light); font: 600 10.5px/1 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap; }
+.ap-after p { color: var(--ivory-dim); font-size: 14.5px; }
+
+/* ============ CONTACT ============ */
+
+/* Cartes de contact */
+.ct-card { display: flex; flex-direction: column; }
+.ct-card--main { border-color: rgba(212, 175, 55, 0.45); }
+.ct-kicker { color: var(--gold-light); font: 600 10.5px/1 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 14px; }
+.ct-value { color: var(--ivory); font: 700 clamp(19px, 1.8vw, 23px)/1.3 var(--body); letter-spacing: -0.01em; word-break: break-word; }
+.ct-note { color: var(--muted); font-size: 14px; margin-top: 10px; flex: 1; }
+.ct-card .nx-btn { margin-top: 22px; align-self: flex-start; }
+
+/* Comment ça se passe */
+.ct-steps { margin-top: clamp(32px, 4vw, 52px); border-top: 1px solid var(--line); }
+.ct-steps li { display: grid; grid-template-columns: 64px 1fr; gap: 20px; align-items: baseline; padding: 22px 0; border-bottom: 1px solid var(--line); }
+.ct-step-num { color: var(--gold); font: 500 15px var(--mono); }
+.ct-steps h3 { font: 700 17px/1.35 var(--body); }
+.ct-steps p { margin-top: 4px; color: var(--muted); font-size: 14.5px; max-width: 620px; }
+
+/* FAQ accordéon */
+.ct-faq { margin-top: clamp(32px, 4vw, 52px); border-top: 1px solid var(--line); }
+.ct-faq-item { border-bottom: 1px solid var(--line); }
+.ct-faq-heading { margin: 0; }
+.ct-faq-trigger { display: grid; grid-template-columns: 52px 1fr auto; gap: 16px; align-items: center; width: 100%; padding: 22px 0; text-align: left; transition: color 0.25s; }
+.ct-faq-trigger:hover { color: var(--gold-light); }
+.ct-faq-num { color: var(--gold); font: 500 12px var(--mono); }
+.ct-faq-question { font: 700 clamp(16px, 1.6vw, 19px)/1.35 var(--body); letter-spacing: -0.01em; }
+.ct-faq-icon { position: relative; width: 30px; height: 30px; border: 1px solid var(--line-strong); border-radius: 50%; flex: none; transition: border-color 0.25s, transform 0.35s var(--ease); }
+.ct-faq-icon::before, .ct-faq-icon::after { content: ""; position: absolute; top: 50%; left: 50%; width: 10px; height: 1.5px; background: var(--gold-light); transform: translate(-50%, -50%); transition: transform 0.35s var(--ease); }
+.ct-faq-icon::after { transform: translate(-50%, -50%) rotate(90deg); }
+.ct-faq-trigger[aria-expanded="true"] .ct-faq-icon { border-color: var(--gold); }
+.ct-faq-trigger[aria-expanded="true"] .ct-faq-icon::after { transform: translate(-50%, -50%) rotate(0deg); }
+.ct-faq-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.45s var(--ease); }
+.ct-faq-item.is-open .ct-faq-panel { grid-template-rows: 1fr; }
+.ct-faq-panel-inner { overflow: hidden; }
+.ct-faq-panel p { padding: 0 46px 26px 68px; color: var(--ivory-dim); font-size: 14.5px; max-width: 720px; }
+.ct-faq-panel strong { color: var(--gold-light); font-weight: 700; }
+
+/* Bande coordonnées */
+.ct-band { border-block: 1px solid var(--line); background: var(--surface); }
+.ct-band .shell { display: grid; grid-template-columns: repeat(3, 1fr); }
+.ct-band a { display: block; padding: 20px 16px 20px 0; border-right: 1px solid var(--line); color: var(--muted); font: 600 10.5px/1.6 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.25s; }
+.ct-band a + a { padding-left: 18px; }
+.ct-band a:last-child { border-right: 0; }
+.ct-band a:hover { color: var(--ivory-dim); }
+.ct-band b { display: block; color: var(--gold-light); font-weight: 500; }
+
+/* ============ Responsive ============ */
+@media (max-width: 1023px) {
+  .ap-position { grid-template-columns: 1fr; }
+}
+@media (max-width: 767px) {
+  .ct-steps li { grid-template-columns: 1fr; gap: 6px; }
+  .ct-faq-trigger { grid-template-columns: 1fr auto; }
+  .ct-faq-num { display: none; }
+  .ct-faq-panel p { padding: 0 40px 24px 0; }
+  .ct-band .shell { grid-template-columns: 1fr; }
+  .ct-band a { border-right: 0; border-bottom: 1px solid var(--line); padding-left: 0; }
+  .ct-band a + a { padding-left: 0; }
+  .ct-band a:last-child { border-bottom: 0; }
+  .ct-card .nx-btn { align-self: stretch; }
+}

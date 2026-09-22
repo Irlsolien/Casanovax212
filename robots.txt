@@ -1,5 +1,3 @@
 User-agent: *
 Allow: /
-Disallow: /prospect/
-
 Sitemap: https://casanovax212.vercel.app/sitemap.xml
